@@ -70,11 +70,15 @@ def read_excel(excels):
 	#  print "h:",row,"lie",col
 	for c in range(0,col):
 		for r in range(0,row):
+			# ctype :  0 empty,1 string, 2 number, 3 date, 4 boolean, 5 error
 			vtyps = table.cell(r,c).ctype
+			print type(vtyps),vtyps
 			worksheet.col(r).width = 256*20
+			values = table.cell_value(r,c)
+			if vtyps == 0:
+				worksheet.write(r, c, values, style)
 			if vtyps != 1:
 				continue
-			values = table.cell_value(r,c)
 			timelist = values.split(" ")
 			if isRight(timelist) == False:
 				worksheet.write(r, c, values, style)
