@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Demo</title>
+    <meta charset="utf-8">
+    <link href="hello.css" rel="stylesheet" type="text/css" />
+    <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script src="js/jquery-2.1.1.min.js"></script>
+    <!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+    <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="js/BootstrapMenu.min.js"></script>
+    <style>
+    * {
+        font-family: 'Trebuchet MS';
+        outline: none;
+    }
+
+    body {
+        margin: 0;
+    }
+
+    body {
+        padding-bottom: 100px;
+    }
+    </style>
+</head>
+<script type="text/javascript">
+</script>
+
+<body>
+    <div class="container " style="height:80%">
+        <div class="col-md-12 column" id="contains">
+            <button type="button" class="btn btn-warning" style="margin-top: 20px" onclick="add_a_Menu(1)">添加菜单</button>
+            <input id ="flag" type="hidden" name="" value="">
+            <input id ="menuIndex" type="hidden" name="" value="">
+            <input id ="buttonIndex" type="hidden" name="" value="">
+        </div>
+    </div>
+
+
+
+
+    <!-- 修改按钮文字模态框-->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">修改文字</h4>
+                </div>
+                <div class="modal-body">
+                    <input id="submitText" type="text" value="" name="">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="saveJson()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--底部输出文字-->
+    <div class="navbar navbar-inverse navbar-fixed-bottom">
+        <!--fluid 是偏移一部分-->
+        <h1 style="color:#5CB85C" id="console"></h1>
+    </div>
+    </div>
+</body>
+<script type="text/javascript">
+//var buttons = $("button[tv$='1']")
+
+var menu2 = new BootstrapMenu('.btn-default', {
+    menuEvent: 'right-click',
+
+    fetchElementData: function(buttons) {
+        var rowId = buttons.attr('index')
+        return rowId;
+    },
+    actions: [{
+        name: '编辑',
+        onClick: function(row) {
+            $('#flag').val(3);//flag = 3编辑按钮
+            $('#myModal').modal('show');
+            var menuIndex = row.split("_")[0]
+            var buttonIndex = row.split("_")[1]
+            var txt = row.split("_")[2]
+             $('#menuIndex').val(menuIndex);
+            $('#buttonIndex').val(buttonIndex);
+            var title = "正在编辑按钮"
+            $("#myModalLabel").html(title)
+            $("#submitText").val(txt);
+            $('#myModal').modal('show');
+        }
+    }, {
+        name: '删除',
+        onClick: function(row) {
+             var menuIndex = Number(row.split("_")[0])
+             var buttonIndex = Number(row.split("_")[1])
+             removeButton(menuIndex,buttonIndex);
+        }
+    }]
+})
+
+
+//解析json
+var fs = require('fs');
+var file = "./config.json";
+var result = JSON.parse(fs.readFileSync(file));
+
+//渲染html
+for (var k in result) {
+    var menuIndex = k;
+    var menu = result[k]['menu'];
+    var buttons = result[k]['buttons'];
+
+    var buttonHtml =   "";
+
+     for(var buttonsId in buttons){
+            var index = buttonsId;
+            var button_name = buttons[buttonsId];
+            //索引id由菜单索引+按钮索引构成
+            var myid = "b"+menuIndex+"_"+index;
+            var myindex = menuIndex+"_"+index+"_"+button_name;
+            buttonHtml += "<button id='"+myid+"'  type='button' tv='1' index ='"+myindex+"' class='btn btn-default' onclick='showMsg(this)'>"+button_name+"</button>&nbsp;&nbsp;&nbsp;&nbsp;"; 
+            
+     }
+    var menuHtml = "<div class='row clearfix'>" +
+        "<div class='col-md-8 column'>" +
+        "<hr align=left width=50% style='border-top: 1px solid #ccc5c5;'>" +
+        "<div class='row clearfix'>" +
+        "<div class='col-md-12 column'>" +
+        "<h2> "+menu+" </h2>" +
+        "<p><button type='button' class='btn btn-danger' onclick=updateMenu("+menuIndex+")>修改菜单-</button>&nbsp;&nbsp;&nbsp;&nbsp;"+
+        "<button type='button' class='btn btn-danger' onclick=removeMenu("+menuIndex+")>删除菜单-</button>&nbsp;&nbsp;&nbsp;&nbsp;"+
+        "<button type='button' class='btn btn-primary' onclick='add_a_button(2,"+menuIndex+")'>添加按钮+</button></p>" +
+        "</div>" +
+        "</div>" +
+        "</div>" +
+        "<div class='row clearfix'>" +
+        "<div class='col-md-12 column'>" +
+        "<div class='col-md-12 column'>" +  buttonHtml+
+        "</div>" +
+        "</div>" +
+        "</div>" +
+        "</div>";
+
+    $('#contains').append(menuHtml);
+
+
+
+}
+
+
+//点击添加菜单事件 flag = 1
+function add_a_Menu(flag){
+    //改变状态标识的状态
+    $('#flag').val(flag);
+    var title = "正在添加菜单"
+    $("#myModalLabel").html(title)
+    $('#myModal').modal('show');
+}
+
+//点击添加按钮事件 flag = 2
+function add_a_button(flag,menuIndex){
+    $('#flag').val(flag);
+    $('#menuIndex').val(menuIndex);
+    var title = "正在添加按钮"
+    $("#myModalLabel").html(title)
+    $('#myModal').modal('show');
+}
+// 修改菜单事件 flag = 4
+function updateMenu(menuIndex){
+     $('#flag').val(4);
+    $('#menuIndex').val(menuIndex);
+    var title = "正在修改菜单"
+    $("#myModalLabel").html(title)
+    var menuName = result[menuIndex]['menu']
+    $(" #submitText ").val(menuName)
+    $('#myModal').modal('show');
+}
+
+//模态框提交按钮状态
+function saveJson(){
+   var flag =  $(" #flag ").val()
+   if(flag == 1){
+        var menuName =  $(" #submitText ").val()
+        addMenu(menuName);
+   }else if(flag == 2){
+       var buttonName =  $(" #submitText ").val();
+       var menuIndex = $("#menuIndex").val()
+       addButton(menuIndex,buttonName);
+   }else if(flag == 3){
+        //修改按钮
+        var buttonName =  $(" #submitText ").val();
+        var menuIndex = Number($("#menuIndex").val())
+        var buttonIndex = Number($("#buttonIndex").val())
+        updateButton(menuIndex,buttonIndex,buttonName);
+   }else if(flag == 4){
+        //修改菜单
+        var newName = $(" #submitText ").val()
+         var menuIndex = Number($("#menuIndex").val())
+         updateMenuName(menuIndex,newName)
+   }
+}
+function updateMenuName(mIndex,newName){
+    result[mIndex]['menu'] = newName;
+    fs.writeFileSync(file, JSON.stringify(result));
+    document.location.reload();
+}
+function removeButton(mIndex,bIndex){
+    result[mIndex]['buttons'].splice(bIndex,1);
+     fs.writeFileSync(file, JSON.stringify(result));
+    document.location.reload();
+}
+
+function updateButton(mIndex,bIndex,buttonName){
+    //alert(mIndex+"+"+bIndex+"+"+buttonName);
+    result[mIndex]['buttons'].splice(bIndex,1,buttonName);
+    fs.writeFileSync(file, JSON.stringify(result));
+    document.location.reload();
+}
+
+
+function removeMenu(menuIndex){
+    result.splice(menuIndex,1);
+    fs.writeFileSync(file, JSON.stringify(result));
+    document.location.reload();
+}
+
+function addButton(menuIndex,buttonName){
+    var buttons = result[menuIndex]['buttons'];
+    if(typeof(buttons) == "undefined"){
+       var arr = new Array()
+       arr.push(buttonName)
+       result[menuIndex]['buttons'] = arr;
+    }else{
+        buttons.push(buttonName);
+    }
+    
+     fs.writeFileSync(file, JSON.stringify(result));
+     document.location.reload();
+}
+
+function addMenu(menuName) {
+    var menu = {};
+    menu['menu'] = menuName
+    menu['buttons'] = []
+    result.push(menu);
+    fs.writeFileSync(file, JSON.stringify(result));
+    document.location.reload();
+}
+
+function showMsg(obj){
+    var msg = $(obj).html();
+    $("#console").html(msg)
+}
+
+</script>
+
+</html>
